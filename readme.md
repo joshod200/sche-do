@@ -1,6 +1,9 @@
 # Sche-do
 A to-do android application enhanced with alarm feature and data persistence
 
+## Screenshot
+![screenshot](./screenshot/screenshot.jpg)
+
 ## Built With
 * Kotlin
 * Broadcast Receiver
