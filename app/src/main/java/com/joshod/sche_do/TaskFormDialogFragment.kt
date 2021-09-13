@@ -14,21 +14,25 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class TaskFormDialogFragment : BottomSheetDialogFragment() {
+
+    companion object{
+        const val TAG = "TASK_FORM"
+    }
+
     private var mListener: Listener? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        var view = inflater.inflate(R.layout.fragment_task_form_dialog, container, false)
-        return view
+        return inflater.inflate(R.layout.fragment_task_form_dialog, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         createTaskButton.setOnClickListener {
             val taskName = taskName.text.toString()
-            var hour = 0
-            var minute = 0
+            val hour: Int
+            val minute: Int
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 hour = taskAlarm.hour
                 minute = taskAlarm.minute
@@ -36,22 +40,19 @@ class TaskFormDialogFragment : BottomSheetDialogFragment() {
                 hour = taskAlarm.currentHour
                 minute = taskAlarm.currentMinute
             }
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = System.currentTimeMillis()
-            calendar.set(Calendar.HOUR_OF_DAY, hour)
-            calendar.set(Calendar.MINUTE, minute)
-            calendar.set(Calendar.SECOND, 0)
-            calendar.set(Calendar.MILLISECOND, 0)
-            var time = SimpleDateFormat("HH:mm", Locale.ENGLISH).format(calendar.time)
+            val calendar = Task.makeCalendar(hour, minute)
+            val time = SimpleDateFormat("HH:mm", Locale.ENGLISH).format(calendar.time)
 
-            if(calendar.timeInMillis < System.currentTimeMillis()) Toast.makeText(activity, "Time can't be in the past", Toast.LENGTH_SHORT).show()
-            else if (taskName.isEmpty()) Toast.makeText(activity, "Name can't be blank", Toast.LENGTH_SHORT).show()
-            else{
-                val task = Task(taskName, time)
-                task.save()
-                task.schedule(context!!, calendar)
-                mListener!!.onCreateTask(task)
-                activity!!.supportFragmentManager.popBackStack()
+            when {
+                calendar.timeInMillis < System.currentTimeMillis() -> Toast.makeText(activity, "Time can't be in the past", Toast.LENGTH_SHORT).show()
+                taskName.isEmpty() -> Toast.makeText(activity, "Name can't be blank", Toast.LENGTH_SHORT).show()
+                else -> {
+                    val task = Task(taskName, time)
+                    task.save()
+                    task.schedule(requireContext(), calendar)
+                    mListener!!.onCreateTask(task)
+                    requireActivity().supportFragmentManager.popBackStack()
+                }
             }
 
         }
@@ -60,10 +61,10 @@ class TaskFormDialogFragment : BottomSheetDialogFragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val parent = parentFragment
-        if (parent != null) {
-            mListener = parent as Listener
+        mListener = if (parent != null) {
+            parent as Listener
         } else {
-            mListener = context as Listener
+            context as Listener
         }
     }
 

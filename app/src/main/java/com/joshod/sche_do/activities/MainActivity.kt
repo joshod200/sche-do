@@ -15,17 +15,19 @@ import com.orm.SugarRecord
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(), TaskFormDialogFragment.Listener{
+open class MainActivity : AppCompatActivity(), TaskFormDialogFragment.Listener{
 
     lateinit var tasks: MutableList<Task>
+    lateinit var swipeToDeleteCallback: SwipeToDeleteCallback
 
-    private fun fetchAllTasks(): MutableList<Task>{
+    open fun fetchAllTasks(): MutableList<Task>{
         return SugarRecord.listAll(Task::class.java, "time(TIME) DESC")
     }
 
     override fun onCreateTask(task: Task) {
         tasks.clear()
-        tasks.addAll(fetchAllTasks())
+        val newTasks = fetchAllTasks()
+        tasks.addAll(newTasks)
         tasksList.adapter!!.notifyDataSetChanged()
     }
 
@@ -37,11 +39,11 @@ class MainActivity : AppCompatActivity(), TaskFormDialogFragment.Listener{
         tasksList.adapter = adapter
         tasksList.layoutManager = LinearLayoutManager(this)
         tasksList.addItemDecoration(DividerItemDecoration(application, DividerItemDecoration.VERTICAL))
-        val swipeToDeleteCallback = object : SwipeToDeleteCallback() {
+        swipeToDeleteCallback = object : SwipeToDeleteCallback() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val pos = viewHolder.layoutPosition
                 val task = tasks[pos]
-                task.unschedule(applicationContext)
+                task.unschedule(application)
                 task.delete()
                 tasks.removeAt(pos)
                 adapter.notifyItemRemoved(pos)
@@ -57,7 +59,8 @@ class MainActivity : AppCompatActivity(), TaskFormDialogFragment.Listener{
 
     private fun showBottomSheetDialog() {
         val taskFormDialogFragment = TaskFormDialogFragment()
-        taskFormDialogFragment.show(supportFragmentManager, taskFormDialogFragment.tag)
+        taskFormDialogFragment.show(supportFragmentManager, TaskFormDialogFragment.TAG)
+        supportFragmentManager.executePendingTransactions()
     }
 
 }

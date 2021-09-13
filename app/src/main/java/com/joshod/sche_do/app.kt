@@ -4,16 +4,22 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.orm.SugarContext
 
 class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        createNotificationChannnel()
+        SugarContext.init(this)
+        createNotificationChannel()
     }
 
-    private fun createNotificationChannnel() {
+    override fun onTerminate() {
+        SugarContext.terminate();
+        super.onTerminate()
+    }
+
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID,
